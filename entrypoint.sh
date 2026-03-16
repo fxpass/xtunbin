@@ -24,8 +24,8 @@ exec /usr/local/bin/x-tunnel \
     -token "${XTUN_TOKEN:?请设置环境变量 XTUN_TOKEN}" \
     -f "${XTUN_SERVER:?请设置环境变量 XTUN_SERVER}" \
     -l "${XTUN_LISTEN:-socks5://0.0.0.0:40000,http://0.0.0.0:40001}" \
-    -n "${XTUN_NODES:-2}" \
-    -ip "${XTUN_IP_LIST:?请设置环境变量 XTUN_IP_LIST}" \
+    -n "${XTUN_NODES:-3}" \
+    -ip "${XTUN_IP_LIST:-ip.sb}" \
     -ips "${XTUN_IPS_COUNT:-4}" \
     -dns "${XTUN_DNS:-https://doh.pub/dns-query}" \
     -ech "${XTUN_ECH:-cloudflare-ech.com}" \
