@@ -1,9 +1,9 @@
-name: Build and Push to GHCR
+name: Build and Push Multi-Arch Docker
 
 on:
   push:
     branches: [ "main" ]
-  workflow_dispatch:
+  workflow_dispatch: # 允许手动触发
 
 env:
   REGISTRY: ghcr.io
@@ -14,21 +14,22 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
+      packages: write  # 必须开启写入权限才能推送到 GHCR
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # 设置 QEMU 以支持跨架构构建 (arm64/armv7)
+      # 1. 设置 QEMU
+      # 必不可少！因为 Dockerfile 里的 RUN curl 需要在模拟的架构环境下运行
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
 
-      # 设置 Docker Buildx
+      # 2. 设置 Docker Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      # 登录到 GitHub Container Registry
+      # 3. 登录 GitHub 容器镜像仓库
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -36,23 +37,27 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 提取元数据 (标签、版本)
+      # 4. 生成元数据标签
       - name: Extract Docker metadata
         id: meta
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=sha,format=short
 
-      # 构建并推送多架构镜像
+      # 5. 构建并推送（带缓存优化）
       - name: Build and push
         uses: docker/build-push-action@v5
         with:
           context: .
-          # 核心修改：指定三个体系
+          # 指定目标架构
           platforms: linux/amd64,linux/arm64,linux/arm/v7
           push: true
-          tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # 开启 GitHub Actions 专用缓存
+          # 这会让后续构建显著加快
           cache-from: type=gha
           cache-to: type=gha,mode=max
