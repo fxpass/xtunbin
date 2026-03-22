@@ -16,5 +16,4 @@ exec /usr/local/bin/x-tunnel \
     -ip "${XTUN_IP_LIST}" \
     -ips "${XTUN_IPS_COUNT}" \
     -dns "${XTUN_DNS}" \
-    -ech "${XTUN_ECH}" \
-    ${XTUN_EXTRA_ARGS}
+    -ech "${XTUN_ECH}" 
